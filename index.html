@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>디지털 맞춤 배식 & 알레르기 관리</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --danger: #ef4444;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+        }
+
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 650px;
+            margin: 0 auto;
+            background: var(--card);
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 1.5rem;
+            color: var(--primary);
+            margin-bottom: 24px;
+        }
+
+        .step {
+            background: #f1f5f9;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .step-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .date-box {
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="date"] {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .menu-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .menu-item {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .menu-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .allergy-badge {
+            font-size: 0.8rem;
+            color: var(--danger);
+            background: #fef2f2;
+            padding: 2px 8px;
+            border-radius: 4px;
+            width: fit-content;
+        }
+
+        .cant-eat-label {
+            color: var(--danger);
+            font-weight: bold;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .portion-group {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .portion-btn {
+            background: white;
+            border: 1px solid #cbd5e1;
+            color: var(--text);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .portion-btn input {
+            display: none;
+        }
+
+        .portion-btn:has(input:checked) {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .result-box {
+            background: #e0e7ff;
+            border-radius: 10px;
+            padding: 16px;
+            margin-top: 10px;
+        }
+
+        .top-menu {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 8px 0;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🍱 디지털 맞춤 급식 & 알레르기 관리</h1>
+
+    <!-- 1단계: 오늘 날짜 입력 -->
+    <div class="step">
+        <div class="step-title">📅 1. 날짜를 입력하세요</div>
+        <div class="date-box">
+            <input type="date" id="meal-date">
+            <button onclick="fetchMeal()">급식 조회</button>
+        </div>
+    </div>
+
+    <!-- 2~4단계: 오늘의 급식 / 알레르기 확인 / 못 먹는 것 체크 / 급식량 입력 -->
+    <div id="step-meal-container" class="step hidden">
+        <div class="step-title">🥗 2. 오늘의 급식 및 알레르기 확인</div>
+        <p style="font-size: 0.85rem; color: #64748b; margin-top: -5px;">
+            알레르기 성분을 확인하고, 못 먹는 음식에 체크해 주세요.
+        </p>
+        <ul id="menu-list" class="menu-list"></ul>
+
+        <div class="step-title" style="margin-top: 24px;">🥣 3. 오늘의 급식량 선택</div>
+        <div class="portion-group">
+            <label class="portion-btn">
+                <input type="radio" name="portion" value="많이"> 많이
+            </label>
+            <label class="portion-btn">
+                <input type="radio" name="portion" value="보통" checked> 보통
+            </label>
+            <label class="portion-btn">
+                <input type="radio" name="portion" value="적게"> 적게
+            </label>
+            <label class="portion-btn">
+                <input type="radio" name="portion" value="안 먹음"> 안 먹음
+            </label>
+        </div>
+
+        <button onclick="submitPreference()" style="width: 100%; margin-top: 20px; padding: 14px; font-size: 1rem;">
+            배식 정보 제출하기
+        </button>
+    </div>
+
+    <!-- 5단계: 결과 및 선호도 안내 -->
+    <div id="step-result" class="step hidden">
+        <div class="step-title">📊 4. 제출 결과 및 메뉴 선호도</div>
+        <p><strong>선택한 급식량:</strong> <span id="res-portion" style="color: var(--primary); font-weight: bold;">-</span></p>
+
+        <div class="result-box">
+            <div>🏆 오늘 선호도가 가장 높고 많이 섭취하는 메뉴:</div>
+            <div id="res-top-menu" class="top-menu">-</div>
+            <small style="color: #475569;">* 못 먹는 음식으로 체크되지 않은(먹을 수 있는 사람이 가장 많은) 메뉴 기준입니다.</small>
+        </div>
+
+        <h4 style="margin-bottom: 8px; margin-top: 16px;">전체 메뉴별 섭취 가능 현황</h4>
+        <ul id="res-stats-list" class="menu-list"></ul>
+    </div>
+</div>
+
+<script>
+    // 날짜별 급식 샘플 데이터 (알레르기 번호: 1.난류, 2.우유, 5.대두, 6.밀, 10.돼지고기, 16.쇠고기 등)
+    const mealDatabase = {
+        "today": [
+            { id: 1, name: "현미밥", allergy: [] },
+            { id: 2, name: "소고기 미역국", allergy: ["쇠고기(16)", "대두(5)"] },
+            { id: 3, name: "돼지 불고기", allergy: ["돼지고기(10)", "대두(5)", "밀(6)"] },
+            { id: 4, name: "계란말이", allergy: ["난류(1)"] },
+            { id: 5, name: "배추김치", allergy: [] }
+        ]
+    };
+
+    // 선호도 집계용 가상 누적 데이터 (기존에 사용자들이 제출한 데이터)
+    let preferenceStats = {
+        "현미밥": 18,
+        "소고기 미역국": 15,
+        "돼지 불고기": 22,
+        "계란말이": 20,
+        "배추김치": 12
+    };
+
+    let currentMenuList = [];
+
+    // 실행 시 자동으로 오늘 날짜 설정
+    document.addEventListener("DOMContentLoaded", () => {
+        const todayStr = new Date().toISOString().split('T')[0];
+        document.getElementById("meal-date").value = todayStr;
+    });
+
+    // 1. 급식 조회 기능
+    function fetchMeal() {
+        const dateInput = document.getElementById("meal-date").value;
+        if (!dateInput) {
+            alert("날짜를 입력해 주세요.");
+            return;
+        }
+
+        // 입력된 날짜에 데이터가 없어도 기본 샘플 급식을 표출
+        currentMenuList = mealDatabase[dateInput] || mealDatabase["today"];
+        
+        const menuListEl = document.getElementById("menu-list");
+        menuListEl.innerHTML = "";
+
+        currentMenuList.forEach(item => {
+            const li = document.createElement("li");
+            li.className = "menu-item";
+
+            const allergyText = item.allergy.length > 0 
+                ? `<span class="allergy-badge">⚠️ 알레르기: ${item.allergy.join(", ")}</span>`
+                : `<span style="font-size:0.8rem; color:#94a3b8;">알레르기 없음</span>`;
+
+            li.innerHTML = `
+                <div class="menu-info">
+                    <strong>${item.name}</strong>
+                    ${allergyText}
+                </div>
+                <label class="cant-eat-label">
+                    <input type="checkbox" class="cant-eat-check" data-name="${item.name}"> 못 먹음
+                </label>
+            `;
+            menuListEl.appendChild(li);
+        });
+
+        document.getElementById("step-meal-container").classList.remove("hidden");
+        document.getElementById("step-result").classList.add("hidden");
+    }
+
+    // 2. 제출 및 결과/선호도 계산
+    function submitPreference() {
+        // 선택한 급식량 파악
+        const portionRadios = document.getElementsByName("portion");
+        let selectedPortion = "보통";
+        for (const r of portionRadios) {
+            if (r.checked) {
+                selectedPortion = r.value;
+                break;
+            }
+        }
+
+        // '못 먹음'에 체크하지 않은 메뉴만 선호/섭취 인원 +1
+        const checkboxes = document.querySelectorAll(".cant-eat-check");
+        checkboxes.forEach(cb => {
+            const menuName = cb.getAttribute("data-name");
+            if (!cb.checked) {
+                if (!preferenceStats[menuName]) preferenceStats[menuName] = 0;
+                preferenceStats[menuName] += 1;
+            }
+        });
+
+        // 섭취 인원/선호도가 가장 높은 메뉴 찾기
+        let maxScore = -1;
+        let topMenuName = "";
+
+        currentMenuList.forEach(item => {
+            const score = preferenceStats[item.name] || 0;
+            if (score > maxScore) {
+                maxScore = score;
+                topMenuName = item.name;
+            }
+        });
+
+        // 결과 화면 출력
+        document.getElementById("res-portion").innerText = selectedPortion;
+        document.getElementById("res-top-menu").innerText = `${topMenuName} (${maxScore}명 선택)`;
+
+        const statsListEl = document.getElementById("res-stats-list");
+        statsListEl.innerHTML = "";
+        currentMenuList.forEach(item => {
+            const li = document.createElement("li");
+            li.className = "menu-item";
+            li.innerHTML = `
+                <span>${item.name}</span>
+                <strong style="color: var(--primary);">섭취 희망: ${preferenceStats[item.name] || 0}명</strong>
+            `;
+            statsListEl.appendChild(li);
+        });
+
+        document.getElementById("step-result").classList.remove("hidden");
+        document.getElementById("step-result").scrollIntoView({ behavior: 'smooth' });
+    }
+</script>
+
+</body>
+</html>
